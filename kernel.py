@@ -2,6 +2,8 @@ import sys
 import file_manager
 import process
 
+import in_out
+
 def main():
 
     # opcao do module
@@ -16,7 +18,7 @@ def main():
     elif moduleOption == '2':
         process.build(file)
     else:
-        process.build(file)
+        in_out.build(file)
 
 
 if __name__ == "__main__":
