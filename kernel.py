@@ -3,6 +3,8 @@ import file_manager
 import process
 import memory
 
+import in_out
+
 def main():
 
     # opcao do module
@@ -17,7 +19,7 @@ def main():
     elif moduleOption == '2':
         memory.build(file)
     else:
-        process.build(file)
+        in_out.build(file)
 
 
 if __name__ == "__main__":
