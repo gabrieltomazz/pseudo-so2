@@ -1,6 +1,7 @@
 import sys
 import file_manager
 import process
+import memory
 
 def main():
 
@@ -14,7 +15,7 @@ def main():
     if moduleOption == '1':
         process.build(file)
     elif moduleOption == '2':
-        process.build(file)
+        memory.build(file)
     else:
         process.build(file)
 
