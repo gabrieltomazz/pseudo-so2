@@ -5,8 +5,8 @@ def build(process):
 
     listProcess = read_process_from_file(process)
     #fifo(listProcess)
-    sjf(listProcess)
-
+    #sjf(listProcess)
+    round_robin(listProcess)
 
     print('Processo')
     for p in listProcess:
@@ -76,3 +76,47 @@ def sjf(listprocess):
     #         readyProcess.append(proc)
     #
     # readyProcess = sorted(readyProcess, key=lambda row: (row['temp_exec']))
+
+
+def round_robin(listEntrada):
+    listProcess = listEntrada
+    quantum = 2
+    temp_execucao = 0
+    listReady = []
+    print(str(len(listProcess)))
+    #enquanto houver processo chegando ou pronto
+    while len(listProcess) + len(listReady) > 0:
+        #procura por processos que já chegaram para o tempo
+        for process in listProcess:
+            if process['temp_chegada'] <= temp_execucao:
+                listReady.append(process)
+                listProcess.remove(process)
+        #verifica se há processos prontos
+        if len(listReady) == 0:
+            #anda um clock a espera da chegada de novos processos
+            temp_execucao += 1
+        else:
+            #executa o processo
+            i = 0
+            #verifica a cada clock se o processo acaba antes do quantum
+            while i < quantum:
+                listReady[0]['temp_exec'] -= 1
+                if listReady[0]['temp_exec'] == 0:
+                    break
+                i += 1
+            #verifica se o processo acabou:
+            if listReady[0]['temp_exec'] == 0:
+                #TODO: executa o que precisa pra registrar o tempo de termino
+                print("terminou o x " + str(listReady[0]['id']) + " no tempo " + str(temp_execucao))
+                listReady.pop(0)
+            else:
+                #joga pro final da fila
+                listReady.append(listReady[0])
+                #remove do começo
+                listReady.pop(0)
+
+            #adiciona o tempo de execucao feito pelo processo
+            temp_execucao += i
+
+
+
