@@ -5,10 +5,16 @@ import weakref
 
 def build(rolls):
 
-    listRools = read_cilindro_from_file(rolls)
-    fcfs(listRools)
-    sstf(listRools)
-    scan(listRools)
+    lastRoll = int(rolls.readline())
+    initRoll = int(rolls.readline())
+
+    print(lastRoll)
+    print(initRoll)
+
+    listRequests = read_cilindro_from_file(rolls)
+    fcfs(listRequests)
+    sstf(listRequests)
+    scan(listRequests)
 
 
 def read_cilindro_from_file(self):
@@ -16,13 +22,14 @@ def read_cilindro_from_file(self):
     newListRools = []
     for rool in self:
         dados = int(rool)
+        print(dados)
         newListRools.append(dados)
 
     return newListRools
 
 
-def fcfs(listrools):
-    listrools_fcfs = list.copy(listrools)
+def fcfs(listRequests):
+    listrools_fcfs = list.copy(listRequests)
     result = numpy.diff(listrools_fcfs)
     seeks = 0
     for res in result:
