@@ -38,12 +38,19 @@ def read_process_from_file(process):
         dados['id'] = id
         dados['temp_chegada'] = int(coluna[0])
         coluna1 = int(coluna[1])
+        #tempo de execucao necessario
         dados['temp_exec'] = coluna1
+        #tempo restante de execucao
         dados['temp_exec_faltando'] = coluna1
+        #quantas vezes o processo ficou no estado ready, usado também para inferir quantas vezes ficou em espera
         dados['qtd_vezes_pronto'] = 0
+        #armazena o clock em que houve a primeira execucao, -1 indica que nunca foi executado
         dados['comeco_execucao'] = -1
+        #armazena o clock em que o processo finalizou sua execucao
         dados['termino_execucao'] = 0
+        #armazena o tempo em que o processo ficou pronto mas não executando
         dados['tempo_espera'] = 0
+        #armazena o clock da ultima vez que foi escalonado
         dados['clock_ultima_execucao'] = 0
         listProcess = listProcess + [dados]
         id += 1
@@ -77,9 +84,13 @@ def fifo(listprocess):
 
 def sjf(listEntrada):
     output = ""
+    # lista de todos os processos do arquivo txt
     listProcess = listEntrada
+    # tempo de execucao, basicamente o clock do processador
     temp_execucao = 0
+    # lista de prontos, armazena todos os procesos aptos a serem executados
     listReady = []
+    # lista de finalizado possui os processos com suas estatísticas já calculadas
     listDone = []
     # enquanto houver processo chegando ou pronto
     while len(listProcess) + len(listReady) > 0:
@@ -130,23 +141,25 @@ def sjf(listEntrada):
 
 def round_robin(listEntrada):
     output = ""
+    #lista de todos os processos do arquivo txt
     listProcess = listEntrada
+    #define o quantum
     quantum = 2
+    #tempo de execucao, basicamente o clock do processador
     temp_execucao = 0
+    #lista de prontos, armazena todos os procesos aptos a serem executados
     listReady = []
+    #lista de finalizado possui os processos com suas estatísticas já calculadas
     listDone = []
-    # algoritmo da professora adiciona o ultimo executado no final da fila depois dos que ficaram prontos durante o quantum,
-    # logo precisa de um buffer pra inserir no final depois de processar os novos processos
+    # algoritmo da professora adiciona o ultimo executado no final da fila, depois até dos que ainda estão chegando
+    # logo precisa de um buffer temporário com o ultimo executado pra inserir no final depois de
+    # inserir os processos que estão chegando
     lastProcess = 0
-    lastProcessForDebug = 0
-    # print(str(len(listProcess)))
     # enquanto houver processo chegando ou pronto
     while (len(listProcess) + len(listReady) > 0) or lastProcess != 0:
-        # print('tempo de execucao: ' + str(temp_execucao))
         # procura por processos que já chegaram para o tempo
         i = 0
         while i < len(listProcess):
-            # print('iterador i = '+ str(i) + ' id: ' + str(listProcess[i]['id']) + ' tempchegada: ' + str(listProcess[i]['temp_chegada']) + ' <= ' + str(temp_execucao))
             if listProcess[i]['temp_chegada'] <= temp_execucao:
                 # print('\033[1;32m\tO processo [' + str(
                 #     listProcess[i]['id']) + '] entrou para a fila de pronto no tempo ' + str(temp_execucao) + '\033[0m')
@@ -157,17 +170,16 @@ def round_robin(listEntrada):
                 i -= 1
                 # print('tamanho da lista listProcess: ' + str(len(listProcess)))
             i += 1
-            # print('cheguei final do while,  ' + str(i) + '< ' + str(len(listProcess)) + ' é '+ str(i < len(listProcess)))
         # coloca o ultimo executado no final da lista
         if lastProcess != 0:
             listReady.append(lastProcess)
             lastProcess = 0
         # verifica se há processos prontos
         if len(listReady) == 0:
-            # anda um clock a espera da chegada de novos processos
+            # se não tem nenhum pronto, anda um clock a espera da chegada de novos processos
             temp_execucao += 1
         else:
-            # executa o processo
+            # como há processos prontos, executa o primeiro da fila até dar o quantum
             i = 0
             # verifica a cada clock se o processo acaba antes do quantum
             # contador i serve para saber quantos clocks foram usados para o processo
@@ -188,48 +200,45 @@ def round_robin(listEntrada):
             temp_execucao += i
             # verifica se o processo acabou:
             if listReady[0]['temp_exec_faltando'] == 0:
-                # processo acabou
-                # print("\033[34m\tterminou o processo [" + str(listReady[0]['id']) + "]\033[0m")
                 listReady[0]['termino_execucao'] = temp_execucao
+                #se acabou, adiciona na lista de finalizado e remove da lista de pronto
                 listDone.append(listReady.pop(0))
-            # se nao acabou, joga pro final da lista
+
+            # se nao acabou, joga pro buffer pra ser adicionado no final da lista
             else:
                 # #joga pro final da fila e incrementa a qtd de vezes pronto
-                # if lastProcessForDebug != 0:
-                #     if listReady[0]['id'] != lastProcessForDebug['id']:
                 listReady[0]['qtd_vezes_pronto'] += 1
                 listReady[0]['clock_ultima_execucao'] = temp_execucao
-                # registra o processo como ultimo
+                # registra no buffer de ultimo processo
                 lastProcess = listReady[0]
-                lastProcessForDebug = listReady[0]
-                # remove do começo
+                # remove do começo da lista
                 listReady.pop(0)
     file_manager.write(output, 'process_rr_result')
     return [listDone, temp_execucao]
 
 
+#realiza os cálculos das estatísticas pedidas
 def calculaEstatisticas(listProcess):
     somaTurnarounds = 0
     somaTempoRespostas = 0
     somaTempoEspera = 0
+    #calcula para cada processo e adiciona na soma
     if len(listProcess) != 0:
         for p in listProcess:
             # calcular TURNAROUND (termino_execucao - temp_chegada)
             somaTurnarounds += p['termino_execucao'] - p['temp_chegada']
 
-            # calcular Tempo de Resposta (tempo de espera / qtd_vezes_pronto => (termino_execucao - temp_chegada) / qtd_vezes_pronto)
-            # print('tempoResposta id[' + str(p['id']) + '] = ' + str(p['termino_execucao']) + '-' + str(p['temp_chegada']) +'-'+str(p['temp_exec']) + ' / ' + str(p['qtd_vezes_pronto']))
-            # print('tempoResposta id[' + str(p['id']) + '] = ' + str(p['tempo_espera']))
-            # somaTempoRespostas += (p['termino_execucao'] - p['temp_chegada'] - p['temp_exec']) / p['qtd_vezes_pronto']
+            # calcular media Tempo de Resposta de um processo (Tempo de Espera/quantidade de vezes interrompido)
             somaTempoRespostas += (p['termino_execucao'] - p['temp_chegada'] - p['temp_exec']) / p['qtd_vezes_pronto']
-            # print('soma tempo respostas = '+ str(somaTempoRespostas))
 
             # calcular Tempo de Espera (termino_execucao - temp_chegada - temp_exec)
             somaTempoEspera += p['termino_execucao'] - p['temp_chegada'] - p['temp_exec']
 
+        #calcula a media dos turnaronds
         mediaTurnaround = somaTurnarounds / len(listProcess)
+        #calcula a media de tempo de resposta de todos os processos
         mediaTempoRespostas = somaTempoRespostas / len(listProcess)
+        #calcula a media do tempo de espera
         mediaTempoEspera = somaTempoEspera / len(listProcess)
-        # for p in listProcess:
-        #     print('id ['+str(p['id'])+'] de '+str(p['comeco_execucao'])+' ate '+str(p['termino_execucao']))
+        #imprime os valores
         print(' ' + str(round(mediaTurnaround, 2)) + ' ' + str(round(mediaTempoRespostas, 2)) + ' ' + str(round(mediaTempoEspera, 2)))
