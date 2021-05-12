@@ -60,11 +60,12 @@ def sstf(listrequests):
 
     seek = 0
     min_position = listrools_sstf[0]
+    first = True
 
     while len(listrools_sstf) > 1:
         listrools_sstf.remove(min_position)
         # funcao retorna a menor seek possivel
-        min_seek, min_position = smallest_seek(listrools_sstf, min_position, head)
+        min_seek, min_position, first = smallest_seek(listrools_sstf, min_position, head, first)
         # calculo do seek
         seek = seek+min_seek
 
@@ -99,7 +100,7 @@ def scan(listrequests):
 
 
 # menor seek possivel
-def smallest_seek(listrools_sstf, position, head):
+def smallest_seek(listrools_sstf, position, head, first):
     min_seek = max(listrools_sstf)
     min_position = 0
 
@@ -111,12 +112,20 @@ def smallest_seek(listrools_sstf, position, head):
             listrools_sstf.remove(rool)
 
         # culculo do menor seek
+        # se for a primeira vez aponta para baixo
+        # if first:
+        #     if rool <= position:
+        #         seek = abs(position - rool)
+        #         if seek < min_seek:
+        #             min_seek = seek
+        #             min_position = rool
+        # else:
         seek = abs(position - rool)
         if seek < min_seek:
             min_seek = seek
             min_position = rool
 
-    return min_seek, min_position
+    return min_seek, min_position, False
 
 
 # menor seek possivel por direcao
@@ -126,6 +135,8 @@ def smallest_seek_direction(listrools_scan, position, direction, head):
 
     if position == 0:
         direction = 'right'
+    if position == head:
+        direction = 'left'
 
     for rool in listrools_scan:
 
