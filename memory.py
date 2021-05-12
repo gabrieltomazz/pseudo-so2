@@ -56,13 +56,30 @@ def fifo(frames):
                 mem_list[mem][1] = frame['ref']
                 listframes_fifo.remove(frame)
 
-    for mem in mem_list:
-        print(mem)
-    first_refer = min(mem_list)
-    position = mem_list.index(first_refer)
+   # for mem in mem_list:
+    #    print(mem)
+    #first_refer = min(mem_list)
+    #position = mem_list.index(first_refer)
 
-    mem_list[position][0] = listframes_fifo[0]['id']
-    mem_list[position][1] = listframes_fifo[0]['ref']
+    for frame in range(len(listframes_fifo)):
+            #if len([item for item in mem_list if listframes_fifo[frame]['ref'] in item['ref']]) > 1:
+            if listframes_fifo[frame] in mem_list:
+                print("Removed "+listframes_fifo[frame])
+                listframes_fifo.remove(listframes_fifo[frame])
+
+            elif listframes_fifo[frame] not in mem_list:
+                page_fault += 1
+                first_refer = min(mem_list)
+                position = mem_list.index(first_refer)
+                mem_list[position][0] = listframes_fifo[frame]['id']
+                mem_list[position][1] = listframes_fifo[frame]['ref']
+
+
+
+    # mem_list[position][0] = listframes_fifo[0]['id']
+    # mem_list[position][1] = listframes_fifo[0]['ref']
+
+
     # print(first_refer)
     # print(position)
     print("----------------------------------")
