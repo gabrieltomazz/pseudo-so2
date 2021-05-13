@@ -51,10 +51,12 @@ def fifo(frames):
     for mem in range(len(mem_list)):
         for frame in listframes_fifo:
             if mem_list[mem][1] == 0:
-                page_fault += 1
-                mem_list[mem][0] = frame['id']
-                mem_list[mem][1] = frame['ref']
-                listframes_fifo.remove(frame)
+                exist, item = exist_in_page(mem_list, frame['ref'])
+                if exist == 0:
+                    page_fault += 1
+                    mem_list[mem][0] = frame['id']
+                    mem_list[mem][1] = frame['ref']
+                    listframes_fifo.remove(frame)
 
     # percorre o restante dos frames
     for frame in listframes_fifo:
@@ -90,11 +92,19 @@ def second_chance(frames):
     for mem in range(len(mem_list)):
         for frame in listframes_fifo:
             if mem_list[mem][1] == 0:
-                page_fault += 1
-                mem_list[mem][0] = frame['id']
-                mem_list[mem][1] = frame['ref']
-                mem_list[mem][2] = 1
-                listframes_fifo.remove(frame)
+                exist, item = exist_in_page(mem_list, frame['ref'])
+                if exist == 1:
+                    posix = mem_list.index(item)
+                    if mem_list[posix][2] == 3:
+                        mem_list[posix][2] = 0
+                    else:
+                        mem_list[posix][2] += 1
+                else:
+                    page_fault += 1
+                    mem_list[mem][0] = frame['id']
+                    mem_list[mem][1] = frame['ref']
+                    mem_list[mem][2] = 1
+                    listframes_fifo.remove(frame)
 
     # percorre o restante dos frames
     for frame in listframes_fifo:
@@ -134,28 +144,28 @@ def lru(frames):
     page_fault = 0
 
     # inicializa a memoria com frames
+
     for mem in range(len(mem_list)):
-        for frame in listframes_fifo:
-            if mem_list[mem][1] == 0:
-                page_fault += 1
-                mem_list[mem][0] = frame['id']
-                mem_list[mem][1] = frame['ref']
-                mem_list[mem][2] = 1
-                listframes_fifo.remove(frame)
+        if mem_list[mem][1] == 0:
+            frame, listframes_fifo = preenche_mem(mem_list, listframes_fifo)
+            page_fault += 1
+            mem_list[mem][0] = frame['id']
+            mem_list[mem][1] = frame['ref']
+            mem_list[mem][2] = 1
 
     # percorre o restante dos frames
-    for frame in listframes_fifo:
+    for frame1 in listframes_fifo:
         # se o frame não existir soma falta de pagina e insere ele na memoria
-        exist, item = exist_in_page(mem_list, frame['ref'])
+        exist, item = exist_in_page(mem_list, frame1['ref'])
         if exist == 1:
             posix = mem_list.index(item)
             mem_list[posix][2] += 1
         else:
             page_fault += 1
-            first_refer = sorted(mem_list, key=lambda row: (row[2]), reverse=True)
+            first_refer = sorted(mem_list, key=lambda row: (row[1]), reverse=True)
             position = mem_list.index(first_refer[0])
-            mem_list[position][0] = frame['id']
-            mem_list[position][1] = frame['ref']
+            mem_list[position][0] = frame1['id']
+            mem_list[position][1] = frame1['ref']
             mem_list[position][2] = 1
 
     print(f"LRU {page_fault}")
@@ -170,6 +180,18 @@ def exist_in_page(mem_list, ref):
     return 0, 0
 
 
+def preenche_mem(mem_list, listframes_fifo):
 
+    frame = listframes_fifo[0]
+    exist, item = exist_in_page(mem_list, frame['ref'])
+    if exist == 1:
+        posix = mem_list.index(item)
+        mem_list[posix][2] = mem_list[posix][2] + 1
+        del listframes_fifo[0]
+        preenche_mem(mem_list, listframes_fifo)
+        return frame, listframes_fifo
+    else:
+        del listframes_fifo[0]
+        return frame, listframes_fifo
 
 
